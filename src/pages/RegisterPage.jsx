@@ -1,7 +1,8 @@
-import { Link } from 'react-router-dom';
-import { Container, Paper, TextField, Button, Typography, Box } from '@mui/material';
+import { useState } from 'react'; // 1. Import useState
+import { Link, useNavigate } from 'react-router-dom'; // 2. Import useNavigate
+import { Container, Paper, TextField, Button, Typography, Box, Alert } from '@mui/material';
+import api from '../services/api'; // 3. Import your API helper
 
-// Reusing the clean input style
 const inputStyle = {
   '& .MuiOutlinedInput-root': {
     borderRadius: '12px',
@@ -14,6 +15,48 @@ const inputStyle = {
 };
 
 function RegisterPage() {
+  const navigate = useNavigate();
+  
+  // 4. State to hold user input
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
+  const [error, setError] = useState(''); // To show error messages
+
+  // 5. Update state when typing
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // 6. The Logic: Send data to backend
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // Stop page refresh
+    setError('');
+
+    try {
+      // Send data to backend
+      const response = await api.post('/auth/register', formData);
+
+      // If successful, the backend should return the user info.
+      // NOTE: Usually register logs you in automatically. 
+      // If your backend sends a token, save it here:
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
+      // Redirect to Login (or Dashboard if your register auto-logins)
+      alert("Account created! Please log in.");
+      navigate('/login');
+
+    } catch (err) {
+      // Show error from backend (like "Email already taken")
+      setError(err.response?.data?.message || "Registration failed");
+    }
+  };
+
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', bgcolor: '#F5F5F7' }}>
       <Container maxWidth="xs">
@@ -29,21 +72,49 @@ function RegisterPage() {
           boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
         }}>
           
-          <Box component="form" noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Display Error Message if exists */}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             
             <Box>
                 <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Full Name</Typography>
-                <TextField fullWidth id="name" name="name" placeholder="John Doe" sx={inputStyle} />
+                <TextField 
+                  fullWidth 
+                  id="name" 
+                  name="name" 
+                  placeholder="John Doe" 
+                  value={formData.name}     // <--- Connected
+                  onChange={handleChange}   // <--- Connected
+                  sx={inputStyle} 
+                />
             </Box>
 
             <Box>
                 <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Email</Typography>
-                <TextField fullWidth id="email" name="email" placeholder="name@example.com" sx={inputStyle} />
+                <TextField 
+                  fullWidth 
+                  id="email" 
+                  name="email" 
+                  placeholder="name@example.com" 
+                  value={formData.email}    // <--- Connected
+                  onChange={handleChange}   // <--- Connected
+                  sx={inputStyle} 
+                />
             </Box>
 
             <Box>
                 <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Password</Typography>
-                <TextField fullWidth name="password" type="password" id="password" placeholder="Create a password" sx={inputStyle} />
+                <TextField 
+                  fullWidth 
+                  name="password" 
+                  type="password" 
+                  id="password" 
+                  placeholder="Create a password" 
+                  value={formData.password} // <--- Connected
+                  onChange={handleChange}   // <--- Connected
+                  sx={inputStyle} 
+                />
             </Box>
 
             <Button
