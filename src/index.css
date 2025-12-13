@@ -1,0 +1,15 @@
+/* src/index.css */
+body {
+  margin: 0;
+  /* This font stack mimics the Apple System Font */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F5F5F7; /* Classic Apple Background Gray */
+  color: #1d1d1f; /* Soft Black, not pure black */
+}
+
+/* Remove default blue outline on clicks for cleaner look */
+*:focus {
+  outline: none;
+}
