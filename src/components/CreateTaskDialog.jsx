@@ -1,0 +1,110 @@
+import { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box } from '@mui/material';
+import api from '../services/api';
+
+// Apple-style input
+const inputStyle = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '12px',
+    backgroundColor: '#f5f5f7',
+    '& fieldset': { border: 'none' },
+    '&:hover fieldset': { border: 'none' },
+    '&.Mui-focused fieldset': { border: '1px solid #0071e3' },
+    '& input': { padding: '14px' },
+  },
+  mb: 2
+};
+
+function CreateTaskDialog({ open, onClose, onTaskCreated }) {
+  const [formData, setFormData] = useState({ title: '', description: '', dueDate: '' });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      // Send data to backend
+      await api.post('/tasks', formData);
+      
+      // Refresh the list & close popup
+      onTaskCreated(); 
+      onClose();
+      
+      // Reset form
+      setFormData({ title: '', description: '', dueDate: '' });
+    } catch (error) {
+      alert("Failed to create task");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog 
+      open={open} 
+      onClose={onClose}
+      PaperProps={{
+        sx: { borderRadius: '24px', padding: '10px', minWidth: '400px' }
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: '700', fontSize: '1.5rem' }}>New Task</DialogTitle>
+      
+      <DialogContent>
+        <Box component="form" sx={{ mt: 1 }}>
+          <TextField
+            fullWidth
+            placeholder="What needs to be done?"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            sx={inputStyle}
+            autoFocus
+          />
+          
+          <TextField
+            fullWidth
+            placeholder="Add a description..."
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            multiline
+            rows={3}
+            sx={inputStyle}
+          />
+
+          <TextField
+            fullWidth
+            type="date"
+            name="dueDate"
+            value={formData.dueDate}
+            onChange={handleChange}
+            sx={inputStyle}
+          />
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 3 }}>
+        <Button onClick={onClose} sx={{ color: '#86868b', fontWeight: '600' }}>Cancel</Button>
+        <Button 
+          onClick={handleSubmit} 
+          variant="contained" 
+          disabled={loading}
+          sx={{
+            borderRadius: '980px',
+            textTransform: 'none',
+            fontWeight: '600',
+            backgroundColor: '#0071e3',
+            boxShadow: 'none',
+          }}
+        >
+          {loading ? 'Saving...' : 'Create Task'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+export default CreateTaskDialog;

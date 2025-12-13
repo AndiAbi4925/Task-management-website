@@ -5,9 +5,10 @@ import AddIcon from '@mui/icons-material/Add';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TaskCard from '../components/TaskCard';
-import api from '../services/api'; // Import API helper
+import api from '../services/api';
+// Step 1: Import the Dialog component here
+import CreateTaskDialog from '../components/CreateTaskDialog'; 
 
-// Keep the StatCard component exactly as it was...
 function StatCard({ title, value, icon, color }) {
     return (
         <Paper elevation={0} sx={{ p: 3, borderRadius: '20px', display: 'flex', alignItems: 'center', gap: 2, height: '100%' }}>
@@ -24,30 +25,31 @@ function StatCard({ title, value, icon, color }) {
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState([]); // State to hold real tasks
+  const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Step 2: State to control opening/closing the dialog
+  const [openDialog, setOpenDialog] = useState(false);
 
-  // 1. Fetch Tasks when page loads
-  useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const response = await api.get('/tasks');
-        setTasks(response.data); // Store tasks in state
-      } catch (error) {
-        console.error("Failed to fetch tasks", error);
-        // If token is invalid, kick user back to login
-        if (error.response?.status === 401) {
-            navigate('/login');
-        }
-      } finally {
-        setLoading(false);
+  // Define fetchTasks function
+  const fetchTasks = async () => {
+    try {
+      const response = await api.get('/tasks');
+      setTasks(response.data);
+    } catch (error) {
+      if (error.response?.status === 401) {
+          navigate('/login');
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Fetch tasks when page loads
+  useEffect(() => {
     fetchTasks();
   }, [navigate]);
 
-  // Calculate stats dynamically from REAL data
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'Completed').length;
   const pendingTasks = tasks.filter(t => t.status === 'Pending').length;
@@ -62,7 +64,7 @@ function DashboardPage() {
              <Avatar sx={{ bgcolor: '#0071e3', width: 32, height: 32 }}>A</Avatar>
           </IconButton>
           <Button onClick={() => {
-              localStorage.removeItem('token'); // Clear token on logout
+              localStorage.removeItem('token');
               navigate('/login');
           }} sx={{ color: '#86868b', textTransform: 'none', fontSize: '0.9rem', fontWeight: 600 }}>Log out</Button>
         </Toolbar>
@@ -70,17 +72,24 @@ function DashboardPage() {
 
       <Container maxWidth="lg" sx={{ mt: 5 }}>
         
-        {/* Stats Section */}
+        {/* Stats */}
         <Grid container spacing={3} mb={6}>
             <Grid item xs={12} sm={4}><StatCard title="Total Tasks" value={totalTasks} color="#0071e3" icon={<AddIcon />} /></Grid>
             <Grid item xs={12} sm={4}><StatCard title="Pending" value={pendingTasks} color="#FF9500" icon={<AccessTimeIcon />} /></Grid>
             <Grid item xs={12} sm={4}><StatCard title="Completed" value={completedTasks} color="#34C759" icon={<CheckCircleOutlineIcon />} /></Grid>
         </Grid>
 
-        {/* Task List Header */}
+        {/* Header Area */}
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
           <Typography variant="h4" fontWeight="700" sx={{ letterSpacing: '-0.02em' }}>My Tasks</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} sx={{ borderRadius: '980px', padding: '10px 24px', textTransform: 'none', fontWeight: '600', backgroundColor: '#0071e3', boxShadow: 'none', '&:hover': { backgroundColor: '#0077ED', boxShadow: 'none' } }}>
+          
+          {/* Step 3: The Button - We added onClick here */}
+          <Button 
+            onClick={() => setOpenDialog(true)} 
+            variant="contained" 
+            startIcon={<AddIcon />} 
+            sx={{ borderRadius: '980px', padding: '10px 24px', textTransform: 'none', fontWeight: '600', backgroundColor: '#0071e3', boxShadow: 'none', '&:hover': { backgroundColor: '#0077ED', boxShadow: 'none' } }}
+          >
             New Task
           </Button>
         </Box>
@@ -99,6 +108,13 @@ function DashboardPage() {
              ))
           )}
         </Grid>
+
+        {/* Step 4: The Dialog Component - Placed at the very end */}
+        <CreateTaskDialog 
+          open={openDialog} 
+          onClose={() => setOpenDialog(false)} 
+          onTaskCreated={fetchTasks} 
+        />
 
       </Container>
     </Box>
