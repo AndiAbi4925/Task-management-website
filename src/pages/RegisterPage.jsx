@@ -1,7 +1,7 @@
-import { useState } from 'react'; // 1. Import useState
-import { Link, useNavigate } from 'react-router-dom'; // 2. Import useNavigate
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Container, Paper, TextField, Button, Typography, Box, Alert } from '@mui/material';
-import api from '../services/api'; // 3. Import your API helper
+import api from '../services/api';
 
 const inputStyle = {
   '& .MuiOutlinedInput-root': {
@@ -16,43 +16,41 @@ const inputStyle = {
 
 function RegisterPage() {
   const navigate = useNavigate();
-  
-  // 4. State to hold user input
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
-  });
-  const [error, setError] = useState(''); // To show error messages
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
 
-  // 5. Update state when typing
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear error when user starts typing again
+    if (error) setError('');
   };
 
-  // 6. The Logic: Send data to backend
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Stop page refresh
+    e.preventDefault();
     setError('');
 
+    // --- 1. Validation Checks ---
+    
+    // Email Check
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+        setError("Please enter a valid email address.");
+        return;
+    }
+
+    // Password Check: 8 chars, 1 Uppercase, 1 Number
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(formData.password)) {
+        setError("Password must be at least 8 characters long, contain 1 Uppercase letter, and 1 Number.");
+        return;
+    }
+
+    // --- 2. Send to Backend ---
     try {
-      // Send data to backend
-      const response = await api.post('/auth/register', formData);
-
-      // If successful, the backend should return the user info.
-      // NOTE: Usually register logs you in automatically. 
-      // If your backend sends a token, save it here:
-      if (response.data.token) {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-
-      // Redirect to Login (or Dashboard if your register auto-logins)
+      await api.post('/auth/register', formData);
       alert("Account created! Please log in.");
       navigate('/login');
-
     } catch (err) {
-      // Show error from backend (like "Email already taken")
       setError(err.response?.data?.message || "Registration failed");
     }
   };
@@ -60,88 +58,38 @@ function RegisterPage() {
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', bgcolor: '#F5F5F7' }}>
       <Container maxWidth="xs">
-        
         <Typography variant="h3" fontWeight="700" textAlign="center" mb={4} sx={{ letterSpacing: '-0.02em' }}>
           Create account.
         </Typography>
 
-        <Paper elevation={0} sx={{
-          padding: 5,
-          borderRadius: '24px',
-          backgroundColor: '#FFFFFF',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
-        }}>
+        <Paper elevation={0} sx={{ padding: 5, borderRadius: '24px', backgroundColor: '#FFFFFF', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
           
-          {/* Display Error Message if exists */}
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {/* Error Alert */}
+          {error && <Alert severity="error" sx={{ mb: 2, borderRadius: '12px' }}>{error}</Alert>}
 
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            
             <Box>
                 <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Full Name</Typography>
-                <TextField 
-                  fullWidth 
-                  id="name" 
-                  name="name" 
-                  placeholder="John Doe" 
-                  value={formData.name}     // <--- Connected
-                  onChange={handleChange}   // <--- Connected
-                  sx={inputStyle} 
-                />
+                <TextField fullWidth name="name" placeholder="John Doe" value={formData.name} onChange={handleChange} sx={inputStyle} />
             </Box>
 
             <Box>
                 <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Email</Typography>
-                <TextField 
-                  fullWidth 
-                  id="email" 
-                  name="email" 
-                  placeholder="name@example.com" 
-                  value={formData.email}    // <--- Connected
-                  onChange={handleChange}   // <--- Connected
-                  sx={inputStyle} 
-                />
+                <TextField fullWidth name="email" placeholder="name@example.com" value={formData.email} onChange={handleChange} sx={inputStyle} />
             </Box>
 
             <Box>
                 <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Password</Typography>
-                <TextField 
-                  fullWidth 
-                  name="password" 
-                  type="password" 
-                  id="password" 
-                  placeholder="Create a password" 
-                  value={formData.password} // <--- Connected
-                  onChange={handleChange}   // <--- Connected
-                  sx={inputStyle} 
-                />
+                <TextField fullWidth name="password" type="password" placeholder="8+ chars, 1 Upper, 1 Number" value={formData.password} onChange={handleChange} sx={inputStyle} />
             </Box>
 
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{
-                mt: 2,
-                py: 1.8,
-                borderRadius: '980px',
-                fontSize: '1.05rem',
-                fontWeight: '600',
-                textTransform: 'none',
-                backgroundColor: '#0071e3',
-                boxShadow: 'none',
-                '&:hover': { backgroundColor: '#0077ED', boxShadow: 'none' }
-              }}
-            >
+            <Button type="submit" fullWidth variant="contained" sx={{ mt: 2, py: 1.8, borderRadius: '980px', fontSize: '1.05rem', fontWeight: '600', textTransform: 'none', backgroundColor: '#0071e3', boxShadow: 'none', '&:hover': { backgroundColor: '#0077ED', boxShadow: 'none' } }}>
               Sign Up
             </Button>
 
             <Box textAlign="center" mt={3}>
                <Typography variant="body2" color="#86868b">
-                  Already have an account?{' '}
-                  <Link to="/login" style={{ textDecoration: 'none', color: '#0071e3', fontWeight: '500' }}>
-                    Sign in
-                  </Link>
+                  Already have an account? <Link to="/login" style={{ textDecoration: 'none', color: '#0071e3', fontWeight: '500' }}>Sign in</Link>
                </Typography>
             </Box>
 
