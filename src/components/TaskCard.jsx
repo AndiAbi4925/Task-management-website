@@ -1,9 +1,11 @@
-import { Card, CardContent, Typography, Box, IconButton } from '@mui/material';
+import { Card, CardContent, Typography, Box, IconButton, Tooltip } from '@mui/material'; // Added Tooltip
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle'; // New Icon
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'; // New Icon
 
-// 1. Add 'onEdit' to the props list
-function TaskCard({ id, title, description, status, dueDate, onDelete, onEdit }) { 
+// 1. Add 'onToggleStatus' to props
+function TaskCard({ id, title, description, status, dueDate, onDelete, onEdit, onToggleStatus }) { 
   const isCompleted = status === 'Completed';
   const statusColor = isCompleted ? '#34C759' : '#FF9500';
 
@@ -16,7 +18,9 @@ function TaskCard({ id, title, description, status, dueDate, onDelete, onEdit })
       display: 'flex',
       flexDirection: 'column',
       transition: 'transform 0.2s ease',
-      '&:hover': { transform: 'scale(1.02)' }
+      '&:hover': { transform: 'scale(1.02)' },
+      // Dim the card if completed
+      opacity: isCompleted ? 0.7 : 1 
     }}>
       <CardContent sx={{ p: 4, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
         
@@ -32,7 +36,17 @@ function TaskCard({ id, title, description, status, dueDate, onDelete, onEdit })
           </Typography>
         </Box>
 
-        <Typography variant="h5" fontWeight="700" sx={{ letterSpacing: '-0.01em', mb: 1 }}>
+        <Typography 
+            variant="h5" 
+            fontWeight="700" 
+            sx={{ 
+                letterSpacing: '-0.01em', 
+                mb: 1,
+                // Add strikethrough if completed
+                textDecoration: isCompleted ? 'line-through' : 'none',
+                color: isCompleted ? '#86868b' : 'inherit'
+            }}
+        >
           {title}
         </Typography>
 
@@ -41,7 +55,17 @@ function TaskCard({ id, title, description, status, dueDate, onDelete, onEdit })
         </Typography>
 
         <Box display="flex" justifyContent="flex-end" gap={1} mt={3}>
-           {/* 2. Attach the onEdit function here */}
+           {/* 2. THE NEW CHECK BUTTON */}
+           <Tooltip title={isCompleted ? "Mark as Pending" : "Mark as Completed"}>
+             <IconButton 
+                size="small" 
+                onClick={() => onToggleStatus(id, status)} // Pass ID and current Status
+                sx={{ color: isCompleted ? '#34C759' : '#86868b' }}
+             >
+                {isCompleted ? <CheckCircleIcon /> : <RadioButtonUncheckedIcon />}
+             </IconButton>
+           </Tooltip>
+
            <IconButton 
              size="small" 
              onClick={() => onEdit({ id, title, description, status, dueDate })} 

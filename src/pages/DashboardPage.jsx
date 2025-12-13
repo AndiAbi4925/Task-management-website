@@ -58,7 +58,20 @@ function DashboardPage() {
     setTaskToEdit(task); // Save the task we want to edit
     setOpenDialog(true); // Open the popup
   };
-
+  
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
+      
+      // Send the update to the backend
+      await api.put(`/tasks/${id}`, { status: newStatus });
+      
+      // Refresh the list to show changes
+      fetchTasks();
+    } catch (error) {
+      alert("Failed to update status");
+    }
+  };
   // New function to open dialog for CREATING (empty)
   const handleAddNew = () => {
     setTaskToEdit(null); // Clear any previous data
@@ -102,9 +115,10 @@ function DashboardPage() {
             sx={{ borderRadius: '980px', padding: '10px 24px', textTransform: 'none', fontWeight: '600', backgroundColor: '#0071e3', boxShadow: 'none' }}
           >
             New Task
+        
           </Button>
         </Box>
-
+        
         <Grid container spacing={3}>
           {loading ? ( <Typography sx={{ p: 4 }}>Loading...</Typography> ) : 
            tasks.length === 0 ? ( <Typography sx={{ p: 4 }}>No tasks found.</Typography> ) : (
@@ -113,7 +127,8 @@ function DashboardPage() {
                   <TaskCard 
                     {...task} 
                     onDelete={handleDeleteTask}
-                    onEdit={handleEditTask} // <--- Pass the function down
+                    onEdit={handleEditTask}
+                    onToggleStatus={handleToggleStatus}
                   />
                 </Grid>
              ))
