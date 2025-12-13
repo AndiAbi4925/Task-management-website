@@ -1,91 +1,79 @@
 import { Link } from 'react-router-dom';
-import { Container, Paper, TextField, Button, Typography, Box, Avatar } from '@mui/material';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { Container, Paper, TextField, Button, Typography, Box } from '@mui/material';
+
+// Reusing the clean input style
+const inputStyle = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: '12px',
+    backgroundColor: '#f5f5f7',
+    '& fieldset': { border: 'none' },
+    '&:hover fieldset': { border: 'none' },
+    '&.Mui-focused fieldset': { border: '1px solid #0071e3' },
+    '& input': { padding: '16px' },
+  },
+};
 
 function RegisterPage() {
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    }}>
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', bgcolor: '#F5F5F7' }}>
       <Container maxWidth="xs">
-        <Paper elevation={10} sx={{
-          padding: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          borderRadius: '20px',
-          backgroundColor: 'rgba(255, 255, 255, 0.85)',
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+        
+        <Typography variant="h3" fontWeight="700" textAlign="center" mb={4} sx={{ letterSpacing: '-0.02em' }}>
+          Create account.
+        </Typography>
+
+        <Paper elevation={0} sx={{
+          padding: 5,
+          borderRadius: '24px',
+          backgroundColor: '#FFFFFF',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
         }}>
-          <Avatar sx={{ m: 1, bgcolor: 'secondary.main', width: 56, height: 56 }}>
-            <PersonAddIcon fontSize="large" />
-          </Avatar>
+          
+          <Box component="form" noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            
+            <Box>
+                <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Full Name</Typography>
+                <TextField fullWidth id="name" name="name" placeholder="John Doe" sx={inputStyle} />
+            </Box>
 
-          <Typography component="h1" variant="h5" fontWeight="bold" sx={{ color: '#333' }}>
-            Create Account
-          </Typography>
-          <Typography variant="body2" color="text.secondary" mb={3}>
-            Join us to start organizing
-          </Typography>
+            <Box>
+                <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Email</Typography>
+                <TextField fullWidth id="email" name="email" placeholder="name@example.com" sx={inputStyle} />
+            </Box>
 
-          <Box component="form" noValidate sx={{ mt: 1, width: '100%' }}>
-             <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="name"
-              label="Full Name"
-              name="name"
-              autoComplete="name"
-              autoFocus
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-            />
+            <Box>
+                <Typography variant="body2" fontWeight="600" ml={1} mb={1} color="text.secondary">Password</Typography>
+                <TextField fullWidth name="password" type="password" id="password" placeholder="Create a password" sx={inputStyle} />
+            </Box>
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{
-                mt: 3, mb: 2, py: 1.5, borderRadius: '12px', fontSize: '1rem', fontWeight: 'bold',
-                background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
-                boxShadow: '0 3px 5px 2px rgba(105, 105, 255, .3)',
-                transition: 'transform 0.2s',
-                '&:hover': { background: 'linear-gradient(45deg, #5a6fd6 30%, #6a4391 90%)', transform: 'scale(1.02)' }
+                mt: 2,
+                py: 1.8,
+                borderRadius: '980px',
+                fontSize: '1.05rem',
+                fontWeight: '600',
+                textTransform: 'none',
+                backgroundColor: '#0071e3',
+                boxShadow: 'none',
+                '&:hover': { backgroundColor: '#0077ED', boxShadow: 'none' }
               }}
             >
               Sign Up
             </Button>
-            <Box textAlign="center" mt={2}>
-               <Typography variant="body2">
+
+            <Box textAlign="center" mt={3}>
+               <Typography variant="body2" color="#86868b">
                   Already have an account?{' '}
-                  <Link to="/login" style={{ textDecoration: 'none', color: '#764ba2', fontWeight: 'bold' }}>
-                    Sign In
+                  <Link to="/login" style={{ textDecoration: 'none', color: '#0071e3', fontWeight: '500' }}>
+                    Sign in
                   </Link>
                </Typography>
             </Box>
+
           </Box>
         </Paper>
       </Container>
