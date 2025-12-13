@@ -1,8 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // <--- Added useEffect
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box } from '@mui/material';
 import api from '../services/api';
 
-// Apple-style input
 const inputStyle = {
   '& .MuiOutlinedInput-root': {
     borderRadius: '12px',
@@ -15,9 +14,24 @@ const inputStyle = {
   mb: 2
 };
 
-function CreateTaskDialog({ open, onClose, onTaskCreated }) {
+// 1. Accept 'taskToEdit' prop
+function CreateTaskDialog({ open, onClose, onTaskCreated, taskToEdit }) {
   const [formData, setFormData] = useState({ title: '', description: '', dueDate: '' });
   const [loading, setLoading] = useState(false);
+
+  // 2. When the dialog opens, check if we are editing
+  useEffect(() => {
+    if (taskToEdit) {
+      setFormData({
+        title: taskToEdit.title || '',
+        description: taskToEdit.description || '',
+        dueDate: taskToEdit.dueDate || ''
+      });
+    } else {
+      // If creating new, reset the form
+      setFormData({ title: '', description: '', dueDate: '' });
+    }
+  }, [taskToEdit, open]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,17 +40,21 @@ function CreateTaskDialog({ open, onClose, onTaskCreated }) {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      // Send data to backend
-      await api.post('/tasks', formData);
+      if (taskToEdit) {
+        // 3a. If editing, send PUT request
+        await api.put(`/tasks/${taskToEdit.id}`, formData);
+      } else {
+        // 3b. If creating, send POST request
+        await api.post('/tasks', formData);
+      }
       
-      // Refresh the list & close popup
       onTaskCreated(); 
       onClose();
-      
-      // Reset form
       setFormData({ title: '', description: '', dueDate: '' });
+
     } catch (error) {
-      alert("Failed to create task");
+      console.error(error);
+      alert("Failed to save task");
     } finally {
       setLoading(false);
     }
@@ -46,11 +64,12 @@ function CreateTaskDialog({ open, onClose, onTaskCreated }) {
     <Dialog 
       open={open} 
       onClose={onClose}
-      PaperProps={{
-        sx: { borderRadius: '24px', padding: '10px', minWidth: '400px' }
-      }}
+      PaperProps={{ sx: { borderRadius: '24px', padding: '10px', minWidth: '400px' } }}
     >
-      <DialogTitle sx={{ fontWeight: '700', fontSize: '1.5rem' }}>New Task</DialogTitle>
+      {/* Dynamic Title */}
+      <DialogTitle sx={{ fontWeight: '700', fontSize: '1.5rem' }}>
+        {taskToEdit ? 'Edit Task' : 'New Task'}
+      </DialogTitle>
       
       <DialogContent>
         <Box component="form" sx={{ mt: 1 }}>
@@ -63,7 +82,6 @@ function CreateTaskDialog({ open, onClose, onTaskCreated }) {
             sx={inputStyle}
             autoFocus
           />
-          
           <TextField
             fullWidth
             placeholder="Add a description..."
@@ -74,7 +92,6 @@ function CreateTaskDialog({ open, onClose, onTaskCreated }) {
             rows={3}
             sx={inputStyle}
           />
-
           <TextField
             fullWidth
             type="date"
@@ -100,7 +117,7 @@ function CreateTaskDialog({ open, onClose, onTaskCreated }) {
             boxShadow: 'none',
           }}
         >
-          {loading ? 'Saving...' : 'Create Task'}
+          {loading ? 'Saving...' : (taskToEdit ? 'Update Task' : 'Create Task')}
         </Button>
       </DialogActions>
     </Dialog>
