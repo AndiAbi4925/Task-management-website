@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { 
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button, Box, 
   FormControl, InputLabel, Select, MenuItem, FormGroup, FormControlLabel, Checkbox 
-} from '@mui/material'; // <--- Import komponen baru
+} from '@mui/material'; 
 import api from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const navy = '#0F172A';
 const gold = '#B78628';
@@ -52,21 +53,23 @@ function CreateTaskDialog({ open, onClose, onTaskCreated, taskToEdit }) {
   };
 
   const handleSubmit = async () => {
-    setLoading(true);
-    try {
-      if (taskToEdit) {
-        await api.put(`/tasks/${taskToEdit.id}`, formData);
-      } else {
-        await api.post('/tasks', formData);
-      }
-      onTaskCreated(); 
-      onClose();
-    } catch (error) {
-      alert("Failed to save request");
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    if (taskToEdit) {
+      await api.put(`/tasks/${taskToEdit.id}`, formData);
+      toast.success("Booking updated successfully!"); // <--- Ganti ini
+    } else {
+      await api.post('/tasks', formData);
+      toast.success("New Guest Booking Created!"); // <--- Ganti ini
     }
-  };
+    onTaskCreated(); 
+    onClose();
+  } catch (error) {
+    toast.error("Failed to save request"); // <--- Ganti alert error
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Dialog open={open} onClose={onClose} PaperProps={{ sx: { borderRadius: '12px', padding: '10px', minWidth: '450px' } }}>

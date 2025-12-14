@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { AppBar, Toolbar, Typography, Container, Grid, Button, Box, Paper, IconButton, Avatar, Chip } from '@mui/material';
+import { AppBar, Toolbar, Typography, Container, Grid, Button, Box, Paper, IconButton, Avatar, Chip, TextField, InputAdornment } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
-import RoomServiceIcon from '@mui/icons-material/RoomService'; // New Icon
-import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // New Icon
+import SearchIcon from '@mui/icons-material/Search';
+import RoomServiceIcon from '@mui/icons-material/RoomService'; 
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; 
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import TaskCard from '../components/TaskCard';
 import api from '../services/api';
 import CreateTaskDialog from '../components/CreateTaskDialog'; 
+import { toast } from 'react-hot-toast';
 
 // --- THEME COLORS ---
 const THEME = {
@@ -36,6 +38,8 @@ function DashboardPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  // State untuk Search dan Dialog
+  const [searchTerm, setSearchTerm] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState(null);
 
@@ -50,11 +54,32 @@ function DashboardPage() {
     }
   };
 
-  const handleDeleteTask = async (id) => {
-    if (window.confirm("Delete this request record?")) {
-      try { await api.delete(`/tasks/${id}`); fetchTasks(); } catch (error) { alert("Failed to delete"); }
-    }
-  };
+  const handleDeleteTask = (id) => {
+  // Panggil toast custom untuk konfirmasi
+  toast((t) => (
+    <Box display="flex" alignItems="center" gap={2}>
+      <Typography variant="body2">Delete this request?</Typography>
+      <Button 
+        size="small" 
+        variant="contained" 
+        color="error" 
+        onClick={async () => {
+          toast.dismiss(t.id); // Tutup toast konfirmasi
+          try { 
+            await api.delete(`/tasks/${id}`); 
+            toast.success("Request deleted successfully"); // Notifikasi Sukses
+            fetchTasks(); 
+          } catch (error) { 
+            toast.error("Failed to delete request"); // Notifikasi Gagal
+          }
+        }}
+      >
+        Delete
+      </Button>
+      <Button size="small" onClick={() => toast.dismiss(t.id)}>Cancel</Button>
+    </Box>
+  ), { duration: 5000, icon: '🗑️' });
+};
 
   const handleEditTask = (task) => {
     setTaskToEdit(task);
@@ -67,23 +92,42 @@ function DashboardPage() {
   };
 
   const handleToggleStatus = async (id, currentStatus) => {
-    try {
-      const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
-      await api.put(`/tasks/${id}`, { status: newStatus });
-      fetchTasks();
-    } catch (error) { alert("Failed to update status"); }
-  };
+  try {
+    const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
+    await api.put(`/tasks/${id}`, { status: newStatus });
+
+    // Tampilkan pesan berbeda tergantung status
+    if (newStatus === 'Completed') {
+        toast.success("Guest checked out / Request Resolved");
+    } else {
+        toast("Request reopened", { icon: '🔄' });
+    }
+
+    fetchTasks();
+  } catch (error) { 
+    toast.error("Failed to update status"); 
+  }
+};
 
   useEffect(() => { fetchTasks(); }, [navigate]);
 
+  // --- LOGIC FILTERING ---
   const totalTasks = tasks.length;
   const completedTasks = tasks.filter(t => t.status === 'Completed').length;
   const pendingTasks = tasks.filter(t => t.status === 'Pending').length;
 
+  // Filter tasks berdasarkan input search (Mencari di Judul/Kamar atau Deskripsi/Nama)
+  const filteredTasks = tasks.filter((task) => {
+    const query = searchTerm.toLowerCase();
+    const roomNumber = task.title?.toLowerCase() || "";
+    const guestName = task.description?.toLowerCase() || "";
+    return roomNumber.includes(query) || guestName.includes(query);
+  });
+
   return (
     <Box sx={{ minHeight: '100vh', backgroundColor: THEME.bg, pb: 10 }}>
       
-      {/* HEADER: Royal Navy for that "Uniform" look */}
+      {/* HEADER */}
       <AppBar position="sticky" elevation={0} sx={{ backgroundColor: THEME.primary, color: THEME.white }}>
         <Toolbar>
           <RoomServiceIcon sx={{ mr: 2, color: THEME.gold }} />
@@ -106,33 +150,68 @@ function DashboardPage() {
             <Grid item xs={12} sm={4}><StatCard title="Resolved" value={completedTasks} color="#34C759" icon={<CheckCircleOutlineIcon />} /></Grid>
         </Grid>
 
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        {/* TITLE & ACTIONS BAR */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4} flexWrap="wrap" gap={2}>
           <Box>
             <Typography variant="h4" fontWeight="700" color={THEME.primary} sx={{ fontFamily: 'serif' }}>Guest Requests</Typography>
             <Typography variant="body2" color="text.secondary">Real-time housekeeping and concierge queue</Typography>
           </Box>
-          <Button 
-            onClick={handleAddNew} 
-            variant="contained" 
-            startIcon={<AddIcon />} 
-            sx={{ 
-                borderRadius: '8px', // More square = more formal
-                padding: '10px 24px', 
-                textTransform: 'none', 
-                fontWeight: '600', 
-                backgroundColor: THEME.gold, // GOLD BUTTON
-                '&:hover': { backgroundColor: '#9A7020' },
-                boxShadow: 'none' 
-            }}
-          >
-            New Request
-          </Button>
+
+          <Box display="flex" gap={2}>
+            {/* --- SEARCH BAR --- */}
+            <TextField 
+                placeholder="Search Room or Guest..." 
+                size="small"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                sx={{ 
+                    bgcolor: 'white', 
+                    borderRadius: 1, 
+                    '& fieldset': { border: 'none' }, // Hapus border default MUI
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                    width: { xs: '100%', sm: '250px' }
+                }}
+                InputProps={{
+                    startAdornment: (
+                        <InputAdornment position="start">
+                            <SearchIcon sx={{ color: '#94A3B8' }} />
+                        </InputAdornment>
+                    ),
+                }}
+            />
+
+            <Button 
+                onClick={handleAddNew} 
+                variant="contained" 
+                startIcon={<AddIcon />} 
+                sx={{ 
+                    borderRadius: '8px', 
+                    padding: '10px 24px', 
+                    textTransform: 'none', 
+                    fontWeight: '600', 
+                    backgroundColor: THEME.gold, 
+                    '&:hover': { backgroundColor: '#9A7020' },
+                    boxShadow: 'none',
+                    whiteSpace: 'nowrap'
+                }}
+            >
+                New Request
+            </Button>
+          </Box>
         </Box>
 
+        {/* LIST OF CARDS */}
         <Grid container spacing={3}>
           {loading ? ( <Typography sx={{ p: 4 }}>Loading queue...</Typography> ) : 
-           tasks.length === 0 ? ( <Typography sx={{ p: 4 }}>No active requests.</Typography> ) : (
-             tasks.map((task) => (
+           filteredTasks.length === 0 ? ( // Gunakan filteredTasks, bukan tasks
+             <Box sx={{ width: '100%', textAlign: 'center', py: 5, color: '#94A3B8' }}>
+                <Typography variant="h6">
+                    {searchTerm ? `No results found for "${searchTerm}"` : "No active requests."}
+                </Typography>
+             </Box>
+           ) : (
+             // Loop filteredTasks agar hasil pencarian muncul
+             filteredTasks.map((task) => (
                 <Grid item xs={12} sm={6} md={4} key={task.id}>
                   <TaskCard 
                     {...task} 
