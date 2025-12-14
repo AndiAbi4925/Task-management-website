@@ -1,24 +1,31 @@
-// ... imports ...
 import { useEffect, useState } from 'react';
-import { AppBar, Toolbar, Typography, Container, Grid, Button, Box, Paper, IconButton, Avatar } from '@mui/material';
+import { AppBar, Toolbar, Typography, Container, Grid, Button, Box, Paper, IconButton, Avatar, Chip } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import AddIcon from '@mui/icons-material/Add';
+import RoomServiceIcon from '@mui/icons-material/RoomService'; // New Icon
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices'; // New Icon
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import TaskCard from '../components/TaskCard';
 import api from '../services/api';
 import CreateTaskDialog from '../components/CreateTaskDialog'; 
 
-// ... StatCard function stays the same ...
+// --- THEME COLORS ---
+const THEME = {
+  primary: '#0F172A', // Royal Navy
+  gold: '#B78628',    // Luxury Gold
+  bg: '#F8F9FA',      // Porcelain White
+  white: '#FFFFFF'
+};
+
 function StatCard({ title, value, icon, color }) {
     return (
-        <Paper elevation={0} sx={{ p: 3, borderRadius: '20px', display: 'flex', alignItems: 'center', gap: 2, height: '100%' }}>
-            <Box sx={{ p: 1.5, borderRadius: '16px', bgcolor: `${color}20`, color: color }}>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 2, height: '100%', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <Box sx={{ p: 1.5, borderRadius: '8px', bgcolor: `${color}15`, color: color }}>
                 {icon}
             </Box>
             <Box>
-                <Typography variant="body2" color="text.secondary" fontWeight="600">{title}</Typography>
-                <Typography variant="h5" fontWeight="700">{value}</Typography>
+                <Typography variant="body2" color="text.secondary" fontWeight="600" textTransform="uppercase" letterSpacing={1}>{title}</Typography>
+                <Typography variant="h4" fontWeight="700" color={THEME.primary}>{value}</Typography>
             </Box>
         </Paper>
     );
@@ -29,9 +36,8 @@ function DashboardPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Dialog State
   const [openDialog, setOpenDialog] = useState(false);
-  const [taskToEdit, setTaskToEdit] = useState(null); // <--- New State
+  const [taskToEdit, setTaskToEdit] = useState(null);
 
   const fetchTasks = async () => {
     try {
@@ -45,37 +51,27 @@ function DashboardPage() {
   };
 
   const handleDeleteTask = async (id) => {
-    if (window.confirm("Are you sure?")) {
-      try {
-        await api.delete(`/tasks/${id}`);
-        fetchTasks(); 
-      } catch (error) { alert("Failed to delete"); }
+    if (window.confirm("Delete this request record?")) {
+      try { await api.delete(`/tasks/${id}`); fetchTasks(); } catch (error) { alert("Failed to delete"); }
     }
   };
 
-  // New function to handle clicking the Edit button
   const handleEditTask = (task) => {
-    setTaskToEdit(task); // Save the task we want to edit
-    setOpenDialog(true); // Open the popup
+    setTaskToEdit(task);
+    setOpenDialog(true);
   };
-  
+
+  const handleAddNew = () => {
+    setTaskToEdit(null);
+    setOpenDialog(true);
+  };
+
   const handleToggleStatus = async (id, currentStatus) => {
     try {
       const newStatus = currentStatus === 'Completed' ? 'Pending' : 'Completed';
-      
-      // Send the update to the backend
       await api.put(`/tasks/${id}`, { status: newStatus });
-      
-      // Refresh the list to show changes
       fetchTasks();
-    } catch (error) {
-      alert("Failed to update status");
-    }
-  };
-  // New function to open dialog for CREATING (empty)
-  const handleAddNew = () => {
-    setTaskToEdit(null); // Clear any previous data
-    setOpenDialog(true);
+    } catch (error) { alert("Failed to update status"); }
   };
 
   useEffect(() => { fetchTasks(); }, [navigate]);
@@ -85,62 +81,75 @@ function DashboardPage() {
   const pendingTasks = tasks.filter(t => t.status === 'Pending').length;
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#F5F5F7', pb: 10 }}>
-       {/* Navbar (Same as before) */}
-      <AppBar position="sticky" elevation={0} sx={{ backgroundColor: 'rgba(255, 255, 255, 0.72)', backdropFilter: 'saturate(180%) blur(20px)', borderBottom: '1px solid rgba(0,0,0,0.05)', color: '#1d1d1f' }}>
+    <Box sx={{ minHeight: '100vh', backgroundColor: THEME.bg, pb: 10 }}>
+      
+      {/* HEADER: Royal Navy for that "Uniform" look */}
+      <AppBar position="sticky" elevation={0} sx={{ backgroundColor: THEME.primary, color: THEME.white }}>
         <Toolbar>
-          <Typography variant="h6" fontWeight="600" sx={{ flexGrow: 1, letterSpacing: '-0.5px' }}>TaskMaster</Typography>
+          <RoomServiceIcon sx={{ mr: 2, color: THEME.gold }} />
+          <Typography variant="h6" fontWeight="700" sx={{ flexGrow: 1, letterSpacing: '1px', fontFamily: 'serif' }}>
+            CONCIERGE LINK
+          </Typography>
           <IconButton component={Link} to="/profile" sx={{ p: 0, mr: 2 }}>
-             <Avatar sx={{ bgcolor: '#0071e3', width: 32, height: 32 }}>A</Avatar>
+             <Avatar sx={{ bgcolor: THEME.gold, width: 32, height: 32, fontSize: '0.9rem' }}>S</Avatar>
           </IconButton>
-          <Button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} sx={{ color: '#86868b' }}>Log out</Button>
+          <Button onClick={() => { localStorage.removeItem('token'); navigate('/login'); }} sx={{ color: 'rgba(255,255,255,0.7)' }}>Sign Out</Button>
         </Toolbar>
       </AppBar>
 
       <Container maxWidth="lg" sx={{ mt: 5 }}>
         
-        {/* Stats (Same as before) */}
+        {/* STATS AREA */}
         <Grid container spacing={3} mb={6}>
-            <Grid item xs={12} sm={4}><StatCard title="Total Tasks" value={totalTasks} color="#0071e3" icon={<AddIcon />} /></Grid>
-            <Grid item xs={12} sm={4}><StatCard title="Pending" value={pendingTasks} color="#FF9500" icon={<AccessTimeIcon />} /></Grid>
-            <Grid item xs={12} sm={4}><StatCard title="Completed" value={completedTasks} color="#34C759" icon={<CheckCircleOutlineIcon />} /></Grid>
+            <Grid item xs={12} sm={4}><StatCard title="Active Requests" value={totalTasks} color={THEME.primary} icon={<RoomServiceIcon />} /></Grid>
+            <Grid item xs={12} sm={4}><StatCard title="Pending Attention" value={pendingTasks} color={THEME.gold} icon={<CleaningServicesIcon />} /></Grid>
+            <Grid item xs={12} sm={4}><StatCard title="Resolved" value={completedTasks} color="#34C759" icon={<CheckCircleOutlineIcon />} /></Grid>
         </Grid>
 
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-          <Typography variant="h4" fontWeight="700" sx={{ letterSpacing: '-0.02em' }}>My Tasks</Typography>
+          <Box>
+            <Typography variant="h4" fontWeight="700" color={THEME.primary} sx={{ fontFamily: 'serif' }}>Guest Requests</Typography>
+            <Typography variant="body2" color="text.secondary">Real-time housekeeping and concierge queue</Typography>
+          </Box>
           <Button 
-            onClick={handleAddNew} // <--- Updated to use our new function
+            onClick={handleAddNew} 
             variant="contained" 
             startIcon={<AddIcon />} 
-            sx={{ borderRadius: '980px', padding: '10px 24px', textTransform: 'none', fontWeight: '600', backgroundColor: '#0071e3', boxShadow: 'none' }}
+            sx={{ 
+                borderRadius: '8px', // More square = more formal
+                padding: '10px 24px', 
+                textTransform: 'none', 
+                fontWeight: '600', 
+                backgroundColor: THEME.gold, // GOLD BUTTON
+                '&:hover': { backgroundColor: '#9A7020' },
+                boxShadow: 'none' 
+            }}
           >
-            New Task
-        
+            New Request
           </Button>
         </Box>
-        
+
         <Grid container spacing={3}>
-          {loading ? ( <Typography sx={{ p: 4 }}>Loading...</Typography> ) : 
-           tasks.length === 0 ? ( <Typography sx={{ p: 4 }}>No tasks found.</Typography> ) : (
+          {loading ? ( <Typography sx={{ p: 4 }}>Loading queue...</Typography> ) : 
+           tasks.length === 0 ? ( <Typography sx={{ p: 4 }}>No active requests.</Typography> ) : (
              tasks.map((task) => (
                 <Grid item xs={12} sm={6} md={4} key={task.id}>
                   <TaskCard 
                     {...task} 
                     onDelete={handleDeleteTask}
                     onEdit={handleEditTask}
-                    onToggleStatus={handleToggleStatus}
+                    onToggleStatus={handleToggleStatus} 
                   />
                 </Grid>
              ))
           )}
         </Grid>
 
-        {/* Pass the taskToEdit to the dialog */}
         <CreateTaskDialog 
           open={openDialog} 
           onClose={() => setOpenDialog(false)} 
           onTaskCreated={fetchTasks} 
-          taskToEdit={taskToEdit} // <--- Pass the data!
+          taskToEdit={taskToEdit} 
         />
 
       </Container>
