@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Container, Paper, TextField, Button, Typography, Box, Alert } from '@mui/material';
+import { Container, Paper, TextField, Button, Typography, Box } from '@mui/material';
+import { toast } from 'react-hot-toast'; // <--- Import Toast
 import api from '../services/api';
 
 const navy = '#0F172A';
@@ -17,35 +18,32 @@ const inputStyle = {
 function RegisterPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
-  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
 
-    // --- Validation (Same as before) ---
+    // Validasi
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-        setError("Please enter a valid email address.");
+        toast.error("Please enter a valid email address.");
         return;
     }
     const passwordRegex = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(formData.password)) {
-        setError("Password must be 8+ chars, with 1 Uppercase & 1 Number.");
+        toast.error("Password too weak (Need 8+ chars, 1 Uppercase, 1 Number).");
         return;
     }
 
     try {
       await api.post('/auth/register', formData);
-      alert("Staff ID Created. Please Log In.");
+      toast.success("Staff ID Created Successfully! Please Login."); // <--- Toast Sukses
       navigate('/login');
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed");
     }
   };
 
@@ -61,8 +59,6 @@ function RegisterPage() {
 
         <Paper elevation={0} sx={{ padding: 5, borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
           
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
                 <Typography variant="caption" fontWeight="600" ml={1} mb={1} color={navy} textTransform="uppercase">Full Name</Typography>

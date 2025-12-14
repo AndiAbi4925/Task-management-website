@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Container, Paper, TextField, Button, Typography, Box, Alert } from '@mui/material';
+import { Container, Paper, TextField, Button, Typography, Box } from '@mui/material';
+import { toast } from 'react-hot-toast';
 import api from '../services/api';
 
 const navy = '#0F172A';
@@ -17,21 +18,17 @@ const inputStyle = {
 function LoginPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     
-    // Simple Email Check
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-        setError("Please enter a valid staff email.");
+    // Validasi simpel
+    if (!formData.email || !formData.password) {
+        toast.error("Please fill in all fields");
         return;
     }
 
@@ -39,9 +36,11 @@ function LoginPage() {
       const response = await api.post('/auth/login', formData);
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      toast.success("Welcome back, Concierge!"); // <--- Toast Sukses
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      toast.error(err.response?.data?.message || "Invalid email or password"); // <--- Toast Error
     }
   };
 
@@ -57,8 +56,6 @@ function LoginPage() {
 
         <Paper elevation={0} sx={{ padding: 5, borderRadius: '12px', border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
           
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
           <Box component="form" onSubmit={handleSubmit} noValidate sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
                 <Typography variant="caption" fontWeight="600" ml={1} mb={1} color={navy} textTransform="uppercase">Email</Typography>

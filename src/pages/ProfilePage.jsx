@@ -3,6 +3,7 @@ import { Container, Paper, TextField, Button, Typography, Box, Avatar, Divider, 
 import { Link } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import api from '../services/api';
+import { toast } from 'react-hot-toast';
 
 const navy = '#0F172A';
 const gold = '#B78628';
@@ -14,7 +15,14 @@ const inputStyle = {
     '&.Mui-focused fieldset': { border: `1px solid ${gold}` },
   },
 };
-
+const handleSave = async () => {
+    try {
+      await api.put('/auth/profile', formData);
+      toast.success("Profile updated successfully!"); // <--- Toast
+    } catch (error) {
+      toast.error("Failed to update profile."); // <--- Toast
+    }
+  };
 function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
