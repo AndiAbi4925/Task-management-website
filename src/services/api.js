@@ -4,7 +4,7 @@ import axios from 'axios';
 // 1. Create a "Instance" of axios
 // This basically saves the base URL so we don't have to type it every time
 const api = axios.create({
-  baseURL: 'http://3.88.199.161/api',
+  baseURL: 'http://100.26.62.24/api',
 });
 
 // 2. The "Interceptor" (The Security Guard)
